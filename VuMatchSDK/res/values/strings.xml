@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="error_1010">Error contacting storage system. An error has been occurred while uploading your image to cloud storage. If you encoutered this error again please, contact VuMacth service support.</string>
+    <string name="error_1020">Cannot upload your image file using the provided uri. Check image uri as well as your connectivity</string>
+    <string name="error_2010">Cannot connect to VuMatch API server. Check you connectivity and try again.</string>
+    <string name="error_2020">An error has occurred while contacting VuMatch API.</string>
+    
+</resources>
