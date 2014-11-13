@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="css/styles.css">
+		<link rel="stylesheet" href="css/bootstrap.min.css">
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="css/bootstrap-theme.min.css">
+
+		<!-- jquery -->
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="js/bootstrap.min.js"></script>
+		<script src="js/script.js"></script>
+
+		<link rel="shortcut icon" type="image/x-icon" href="images/favicon.ico"/>
+		<title>VuMatch SDK</title>
+	</head>
+
+	<body data-spy="scroll" data-target=".navbar-example">
+		<!-- navigation bar-->
+		<!--<nav class = "navbar navbar-default navbar-static-top">
+			<div class="container">
+				<div class="navbar-header">
+					<div>
+						<span><img class="navbar-brand logo" src="images/logo.png"/></span>
+						<span style="color:#f69421" class="navbar-brand">VuMatch SDK</span>
+					</div>
+				</div>
+			</div>
+		</nav>-->
+
+		<!-- Documentation -->
+		<div class="container">
+			<div class="row">
+				<!-- Documentation content -->
+				<div class="col-md-9">
+					<div class="bs-docs-section">
+						<h3 id="overview" class="page-header">Overview</h3>
+						<p >This documentation describes how to use VuMatch SDK.</p>
+					</div>
+					<div class="bs-docs-section">
+						<h3 id="getting-started" class="page-header">Getting started</h3>
+						<ol><li>Download <a>VuMatch SDK</a> to start developing.  </li>
+						    <li><a>Register</a> VuMatch API to get your customer id, application key and application token.  </li>
+						</ol>
+						
+					</div>
+					<div class="bs-docs-section">
+						<h3 id="integration-steps" class="page-header">Integration Steps</h3>
+						<p >Follow the following steps to use VuMatch SDK with any Android project.</p>						
+						<ol>
+						<li>Create your Android project and add a reference to VuMatchSDK project.</li> <br/><div> <img src="images/screen1.png"/> </div><br/>
+						<li>Create VuMatchClient object to call VuMatch API.</li> </br><pre><code>VuMatchClient vuClient = new VuMatchClient(context,CUSTOMER_ID, APP_KEY, APP_TOKEN);</code></pre><p> This constructor takes four parameters: a valid Android context, your customer id, application key and application token.</p>
+						<li>Now you can post an image to VuMatch API by calling method postImage. </li> </br><pre><code>vuClient.postImage(CATEGORY, imageUri,new VuMatchAPIAccessCallbackHandler() {
+
+	@Override
+	public void onSuccess(VuMatchRecommendation[] recommendationArray) {
+		//Your image was posted successfully and an array of recommandations is returned
+	}
+
+	@Override
+	public void onFailure(VuMatchAPIClientError error) {
+		//Ab error has occurred and which is described by error object
+	}
+</code></pre><p>This method takes three parameters: category name, a content uri of the image to be sent to VuMatch API and a callback handler to receive response from postImage.</p>
+<p>After this method finishes it calls either onSuccess or onFinish method of your callback handler object passed in the third parameter depending on the state returned. Those two methods will run in your main thread while postImage itself runs in the background so that you shouldn't wait until you receive a response.</p>
+<p>In case of success you will get a list of VuMatch recommendations through the array passed to onSuccess method. Each object of the array will has two attributes (id, score) that you can read them by calling getId() and getScore() methods of each object.</p>
+<p>In case of unexpected error occurred the method onFailure will be called with an object describes the error. Error has two attributes; code and message that you can read by call getErrorCode() and getErrorMessage() methods.</p>
+<pre><code>@Override
+public void onSuccess(VuMatchRecommendation[] recommendationArray) {
+	for (int i = 0; i < recommendationArray.length; i++) {
+		String id = recommendationArray[i].getId(); 
+		float score = recommendationArray[i].getScore();
+	}
+}
+
+@Override
+public void onFailure(VuMatchAPIClientError error) {
+	String code = error.getErrorCode();
+	String message = error.getErrorMessage();
+}
+</code></pre>
+						</ol>
+					</div>
+					<div class="bs-docs-section">
+						<h3 id="sample-code" class="page-header">Sample Code</h3>
+							<p >
+								You can download <a>sample project</a> that uses VuMatchSDK to post an image stored on device to VuMatch API and show a list of recommendations.
+							</p>
+							<ol><li>Import VuMatchSDK and VuMatch and VuMatchAPIClientSample projects into your workspace.</li>
+							    <li>Import project appcompat_v7 from Android SDK into your workspace.</li>
+							    <li>Open MainActivity.java and replace the four constant attributes (CUSTOMER_ID, APP_KEY, APP_TOKEN, CATEGORY) with your values.</li>
+								<pre><code>// replace the following 4 constants with your correct values
+private static final String CUSTOMER_ID = "your cusromer id";
+private static final String APP_KEY = "your application key";
+private static final String APP_TOKEN = "your application token";
+private static final String CATEGORY = "category name";</code></pre>						
+							    <li>After you run this sample project you should see the following:<br/><img src="images/screen2.png"/></li>
+							    <li>Tap "Pick an Image" button to select an image.<br/><pre><code>@Override
+public void onClick(View v) {
+
+	switch (v.getId()) {
+	case R.id.button_pick_image:
+		pickImage();
+		break;
+
+	default:
+		break;
+	}
+}
+
+private void pickImage() {
+	Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+	intent.setType("image/*");
+	startActivityForResult(intent, REQUEST_CODE_PICKUP_PHOTO);
+}</code></pre>
+							    </li>
+							    <li>After you select the image the sample will post it to VuMatch API and show the list of recommendations.<br/> 
+								<pre class="pre-scrollable" style="word-wrap: normal;"><code style="white-space: pre">@Override
+protected void onActivityResult(int requestCode, int resultCode,
+		Intent intent) {
+	super.onActivityResult(requestCode, resultCode, intent);
+
+	if (requestCode == REQUEST_CODE_PICKUP_PHOTO) {
+
+		if (resultCode == RESULT_OK) {
+			progressProcessing.setVisibility(View.VISIBLE);
+			listRecommendations.setVisibility(View.GONE);
+			Uri imageUri = intent.getData();
+			if (imageUri != null) {
+				VuMatchClient vuClient = new VuMatchClient(this,
+						CUSTOMER_ID, APP_KEY, APP_TOKEN);
+				buttonPickImage.setEnabled(false);
+				vuClient.postImage(CATEGORY, imageUri,
+						new VuMatchAPIAccessCallbackHandler() {
+
+							@Override
+							public void onSuccess(
+									VuMatchRecommendation[] recommendationArray) {
+								listAdapter.clear();
+								for (int i = 0; i < recommendationArray.length; i++) {
+									listAdapter.add(String.format(
+											"%1$s : %2$f",
+											recommendationArray[i].getId(),
+											recommendationArray[i]
+													.getScore()));
+								}
+								listAdapter.notifyDataSetChanged();
+								progressProcessing.setVisibility(View.GONE);
+								listRecommendations.setVisibility(View.VISIBLE);
+								buttonPickImage.setEnabled(true);
+							}
+
+							@Override
+							public void onFailure(
+									VuMatchAPIClientError error) {
+								Log.e(TAG, "Error: " + error.toString());
+								Toast.makeText(MainActivity.this,
+										"Error occured", Toast.LENGTH_LONG)
+										.show();
+								progressProcessing.setVisibility(View.GONE);
+								listRecommendations.setVisibility(View.GONE);
+								buttonPickImage.setEnabled(false);
+							}
+						});
+			}
+		}
+	}
+}</code></pre>
+								<img src="images/screen3.png"/>
+							    </li>
+							</ol>
+					</div>
+				</div>	
+				<!-- Documentation links -->
+				<div class="col-md-3 navbar-example" style="margin-top:40px;">
+        				<ul class="nav nav-pills nav-stacked" data-spy="affix" data-offset-top="60" data-offset-bottom="200">
+						<li><a  class="list-group-item" href="#overview">Overview</a></li>
+						<li><a  class="list-group-item" href="#getting-started">Getting started</a></li>
+						<li><a  class="list-group-item" href="#integration-steps">Integration Steps</a></li>						
+						<li><a  class="list-group-item" href="#sample-code">Sample Code</a></li>
+					</ul>						   		
+					
+				</div>	<!-- /col-md-3 -->	
+			</div><!-- /row -->
+		</div><!-- /container -->
+
+		<!-- footer-->
+		<!--<nav class = "navbar navbar-default navbar">
+			<div class="container">
+				<p class = "navbar-text pull-left" style="font-size:100%">Copyright &copy; 2014 <a href="http://vufind.com">Vufind Inc</a> | All Rights Reserved</p>
+			</div>
+		</nav>-->
+		<br/><br/><br/>
+	</body>
+</html>
