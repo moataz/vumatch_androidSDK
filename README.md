@@ -6,7 +6,7 @@ Android SDK for making calls to the VuMatch API.
 #Getting Started
 
 *    Download [VuMatch SDK](https://developers.vufind.com/) to start developing.
-*    Register VuMatch API to get your customer id, application key and application token.
+*    Register VuMatch API to get your customer id, application key and token, and agree with your account manager on category codes
 
 #Integration Steps
 
