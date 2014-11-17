@@ -34,14 +34,14 @@ public abstract class VuMatchAPIAccessCallbackHandler extends Handler{
 	
 	/**
 	 * This function is called in case of success after contacting VuMatch API
-	 * @param recommendationArray: an array of recommendations returned from VuMatch API
+	 * @param recommendationArray an array of recommendations returned from VuMatch API
 	 */
 	public abstract void onSuccess(VuMatchRecommendation[] recommendationArray);
 	
 	
 	/**
 	 * This function is called in case of failure after contacting VuMatch API
-	 * @param error: an error object with a code and message describes the cause of failure
+	 * @param error an error object with a code and message describes the cause of failure
 	 */
 	public abstract void onFailure(VuMatchAPIClientError error);
 }

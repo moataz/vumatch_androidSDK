@@ -3,19 +3,17 @@ package com.vufind.android.vumatch;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Bitmap.CompressFormat;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.provider.ContactsContract.Directory;
 import android.provider.MediaStore;
 import android.provider.Settings.Secure;
 
-public class Helper {
+class Helper {
 	
 	protected static String getImagePath(Uri imageUri, Context context) {
 		String scheme = imageUri.getScheme();
@@ -38,7 +36,7 @@ public class Helper {
 	protected static Uri scaleDown(Uri imageUri, int targetSize, Context context) {		
 		System.gc();
 		String imagePath = getImagePath(imageUri, context);
-		Bitmap currentImage = BitmapFactory.decodeFile(imagePath);//((BitmapDrawable)mPreviewImageView.getDrawable()).getBitmap();				
+		Bitmap currentImage = BitmapFactory.decodeFile(imagePath);				
 		
 		int targetWidth = targetSize;
 		int targetHeight = targetSize;
@@ -51,8 +49,7 @@ public class Helper {
 			currentImage = null;
 			System.gc();
 			return Uri.parse(imageUri.toString());
-		}
-			
+		}			
 		
 		height = (int)(height * (float)targetWidth/width);
 		
@@ -65,7 +62,6 @@ public class Helper {
 		System.gc();
 		File imageFile;
 		try {			
-			//imageFile = File.createTempFile("vumatch-upload-00", "jpg", context.getCacheDir());
 			imageFile = new File(context.getCacheDir(), "vumatch-upload-00.jpeg");
 			FileOutputStream output;
 			
@@ -78,13 +74,10 @@ public class Helper {
 			} else {
 				return null;
 			}
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		} catch (FileNotFoundException e) {			
 			e.printStackTrace();
 		}
+		
 		return null;
 	}
 	

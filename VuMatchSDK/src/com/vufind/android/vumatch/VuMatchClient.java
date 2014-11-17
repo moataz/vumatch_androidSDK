@@ -2,6 +2,7 @@ package com.vufind.android.vumatch;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -13,8 +14,6 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
@@ -25,8 +24,8 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 
 /**
- * A class containing all functionality that is needed to call VuMatch API
- * @author Vufind.com
+ * This class contains all functionality needed to contact VuMatch API
+ * @author Vufind
  * copyright (c) 2014 Vufind Inc. All Rights Reserved.
  *
  * Permission is granted to use and modify this software to vuMatch beta and premium customers as long as they abide by Vufind's 
@@ -43,7 +42,7 @@ public class VuMatchClient {
 	private VuMatchAPIAccessCallbackHandler callback;
 	private String category;
 	private Uri imageUri;
-	private Context context;
+	private WeakReference<Context> context;
 
 	
 	/**
@@ -55,7 +54,7 @@ public class VuMatchClient {
 	 */
 	public VuMatchClient(Context context, String customerId, String appKey,
 			String appToken) {
-		this.context = context;
+		this.context = new WeakReference<Context>(context.getApplicationContext());
 		this.customerId = customerId;
 		this.appKey = appKey;
 		this.appToken = appToken;
@@ -72,7 +71,7 @@ public class VuMatchClient {
 		this.category = category;		
 		this.callback = callback;
 		this.imageUri = imageUri;
-		this.imageUri = Helper.scaleDown(imageUri, IMAGE_SCALE_SIZE, context);		
+		this.imageUri = Helper.scaleDown(imageUri, IMAGE_SCALE_SIZE, context.get());		
 		Thread thread = new Thread(new APIAccessRunnable());
 		thread.start();
 	}
@@ -111,20 +110,20 @@ public class VuMatchClient {
 		public void run() {
 
 			MimeTypeMap mime = MimeTypeMap.getSingleton();
-			String fileExt = mime.getExtensionFromMimeType(context
+			String fileExt = mime.getExtensionFromMimeType(context.get()
 					.getContentResolver().getType(
 							VuMatchClient.this.imageUri));
 			fileExt = fileExt != null ? fileExt : "jpeg";
-			String fileKey = Helper.getFileKeyName(fileExt, context);
+			String fileKey = Helper.getFileKeyName(fileExt, context.get());
 			try {
 				S3Client.uploadFile(fileKey, VuMatchClient.this.imageUri,
-						context);
+						context.get());
 			} catch(AmazonServiceException ex) {
-				VuMatchAPIClientError error = new VuMatchAPIClientError("1010", context.getString(R.string.error_1010));
+				VuMatchAPIClientError error = new VuMatchAPIClientError("1010", context.get().getString(R.string.error_1010));
 				callback.obtainMessage(VuMatchAPIAccessCallbackHandler.MESSAGE_FAILURE, error).sendToTarget();
 				return;
 			} catch(AmazonClientException ex) {
-				VuMatchAPIClientError error = new VuMatchAPIClientError("1020", context.getString(R.string.error_1020));
+				VuMatchAPIClientError error = new VuMatchAPIClientError("1020", context.get().getString(R.string.error_1020));
 				callback.obtainMessage(VuMatchAPIAccessCallbackHandler.MESSAGE_FAILURE, error).sendToTarget();
 				return;
 			}
@@ -143,11 +142,10 @@ public class VuMatchClient {
 
 				conn.setDoOutput(true);
 				conn.setUseCaches(false);
-				//conn.setChunkedStreamingMode(1024);
 
 				if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
 					Log.e(TAG, "Invalid response code!");
-					VuMatchAPIClientError error = new VuMatchAPIClientError("2020", context.getString(R.string.error_2020));										
+					VuMatchAPIClientError error = new VuMatchAPIClientError("2020", context.get().getString(R.string.error_2020));										
 					callback.obtainMessage(VuMatchAPIAccessCallbackHandler.MESSAGE_FAILURE, error).sendToTarget();
 					return;
 				}
@@ -168,21 +166,21 @@ public class VuMatchClient {
 				if (recommendations != null) {
 					callback.obtainMessage(VuMatchAPIAccessCallbackHandler.MESSAGE_SUCCESS, recommendations).sendToTarget();
 				} else {
-					VuMatchAPIClientError error = new VuMatchAPIClientError("2020", context.getString(R.string.error_2020));										
+					VuMatchAPIClientError error = new VuMatchAPIClientError("2020", context.get().getString(R.string.error_2020));										
 					callback.obtainMessage(VuMatchAPIAccessCallbackHandler.MESSAGE_FAILURE, error).sendToTarget();
 				}
 
 			} catch (MalformedURLException e) {
-				// TODO Auto-generated catch block
-				VuMatchAPIClientError error = new VuMatchAPIClientError("2020", context.getString(R.string.error_2020));										
+				VuMatchAPIClientError error = new VuMatchAPIClientError("2020", context.get().getString(R.string.error_2020));										
 				callback.obtainMessage(VuMatchAPIAccessCallbackHandler.MESSAGE_FAILURE, error).sendToTarget();
 				e.printStackTrace();
 			} catch (IOException e) {
-				VuMatchAPIClientError error = new VuMatchAPIClientError("2010", context.getString(R.string.error_2010));										
+				VuMatchAPIClientError error = new VuMatchAPIClientError("2010", context.get().getString(R.string.error_2010));										
 				callback.obtainMessage(VuMatchAPIAccessCallbackHandler.MESSAGE_FAILURE, error).sendToTarget();
 				e.printStackTrace();
 			}
-
+			
+			callback = null;
 		}
 
 		private VuMatchRecommendation[] parseResonse(String response) {
@@ -207,7 +205,6 @@ public class VuMatchClient {
 					return recommendations;
 				}
 			} catch (JSONException e) {
-
 				e.printStackTrace();
 			}
 
@@ -215,33 +212,4 @@ public class VuMatchClient {
 		}
 
 	}
-
-	protected static class ProcessingHandler extends Handler {
-
-		public static final int MESSAGE_FAIL = 0;
-		public static final int MESSAGE_SUCCESS = 1;
-
-		@Override
-		public void handleMessage(Message msg) {
-
-			super.handleMessage(msg);
-			switch (msg.what) {
-			case MESSAGE_SUCCESS:
-				String[] tags = (String[]) msg.obj;
-				if (tags == null || tags.length == 0) { // nothing matched well
-
-				} else {
-
-				}
-				break;
-			case MESSAGE_FAIL:
-
-				break;
-			default:
-				break;
-			}
-		}
-	}
-	
-	
 }

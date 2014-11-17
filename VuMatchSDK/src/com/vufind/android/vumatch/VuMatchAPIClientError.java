@@ -1,6 +1,6 @@
 package com.vufind.android.vumatch;
 /**
- * Class describe errors that occurs while contacting VuMatch API
+ * Class describes errors that occurs while contacting VuMatch API
  * @author Vufind
  *
  */
@@ -36,5 +36,10 @@ public class VuMatchAPIClientError {
 	
 	protected void setErrorMessage(String errorMessage) {
 		this.errorMessage = errorMessage;
+	}
+	
+	@Override
+	public String toString() {		
+		return String.format("Error %1$s: %2$s", errorCode, errorMessage);
 	}
 }
